@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruleta cine</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+    }
+    canvas {
+      border: 4px solid #333;
+      border-radius: 50%;
+      background: white;
+    }
+    button {
+      padding: 12px 18px;
+      margin-top: 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Ruleta Cine</h2>
+  <canvas id="wheel" width="500" height="500"></canvas>
+  <button id="spinBtn">Girar</button>
+
+  <script>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const size = canvas.width;
+    const radius = size / 2;
+    const options = [
+      "millones", "belle 2021", "when marnie was there", "sailor moon y la promesa de la rosa",
+      "a whisker away", "La hermanastra fea", "the tunnel to summer", "licorice pizza", "anora"
+    ];
+
+    // GANADOR FIJO (TRUCADO)
+    const ganador = "licorice pizza"; // <- 
+
+    const arc = (2 * Math.PI) / options.length;
+    let angle = 0;
+
+    function drawWheel() {
+      for (let i = 0; i < options.length; i++) {
+        const start = angle + i * arc;
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, start, start + arc);
+        ctx.fillStyle = i % 2 === 0 ? "#a5d6a7" : "#ffccbc";
+        ctx.fill();
+        ctx.save();
+
+        ctx.translate(radius, radius);
+        ctx.rotate(start + arc / 2);
+        ctx.fillStyle = "black";
+        ctx.font = "16px Arial";
+        ctx.fillText(options[i], radius * 0.5, 5);
+        ctx.restore();
+      }
+
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(radius - 20, 40);
+      ctx.lineTo(radius + 20, 40);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function spinToWinner() {
+      const index = options.indexOf(ganador);
+      const targetAngle = (3 * Math.PI / 2) - (index * arc + arc / 2);
+      const extraSpins = 6 * Math.PI;
+      const finalAngle = targetAngle + extraSpins;
+
+      const duration = 3000;
+      const start = performance.now();
+
+      function animate(t) {
+        const elapsed = t - start;
+        const progress = Math.min(elapsed / duration, 1);
+        angle = finalAngle * easeOutCubic(progress);
+
+        ctx.clearRect(0, 0, size, size);
+        drawWheel();
+        if (progress < 1) requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOutCubic(x) {
+      return 1 - Math.pow(1 - x, 3);  
+    }
+
+    drawWheel();
+    document.getElementById("spinBtn").addEventListener("click", spinToWinner);
+  </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: url('https://www.famousbirthdays.com/headshots/jovani-vazquez-2.jpg')
+            
+        }
+
+        h1 { color: #333; margin-bottom: 20px; }
+
+        .contenedor-ruleta {
+            position: relative;
+            width: 500px;
+            height: 500px;
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19);
+            transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .indicador {
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 30px solid #ff3b3b;
+            z-index: 10;
+        }
+
+        .boton-girar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: #333;
+            color: white;
+            border-radius: 50%;
+            border: 4px solid white;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+        }
+
+        .boton-girar:hover { background: #555; }
+
+        #resultado {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            min-height: 40px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Pequeño indicador secreto para que sepas si el truco está activo (opcional) */
+        #indicador-truco {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>La Ruleta Aleatoria</h1>
+
+    <div class="contenedor-ruleta">
+        <canvas id="canvas" width="500" height="500"></canvas>
+        <div class="indicador"></div>
+        <button class="boton-girar" onclick="girarRuleta()">GIRAR</button>
+    </div>
+
+    <div id="resultado">Haz clic para girar</div>
+    
+    <div id="indicador-truco"></div>
+
+    <script>
+        const opciones = [
+            "belle 2021",                         // Tecla 1
+            "when marnie was there",              // Tecla 2
+            "el castillo en el cielo",            // Tecla 3
+            "100 metros",                     // Tecla 4
+            "La hermanastra fea",                 // Tecla 5
+            "sailor moon y la promesa de la rosa",// Tecla 6
+            "swing girls",                        // Tecla 7
+            "a whisker away"                     // Tecla 8
+            
+        ];
+
+        const colores = ["#FF6384", "#36A2EB", "#CCFF90", "#FFCE56", "#DDA0DD", "#FF9F40", "#4BC0C0", "#9966FF"];
+
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const centro = canvas.width / 2;
+        const radio = canvas.width / 2;
+        
+        let anguloActual = 0; 
+        let girando = false;
+        let ganadorTrucado = -1; // -1 significa aleatorio, 0-7 es trucado
+
+        // Dibujar Ruleta
+        function dibujarRuleta() {
+            const paso = (2 * Math.PI) / opciones.length;
+            for (let i = 0; i < opciones.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(centro, centro);
+                ctx.arc(centro, centro, radio, i * paso, (i + 1) * paso);
+                ctx.fillStyle = colores[i % colores.length];
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centro, centro);
+                ctx.rotate(i * paso + paso / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#333";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText(opciones[i], radio - 20, 5);
+                ctx.restore();
+            }
+        }
+        dibujarRuleta();
+
+        // --- LÓGICA DEL TRUCO (EVENTOS DE TECLADO) ---
+        document.addEventListener('keydown', (event) => {
+            if (girando) return; // No cambiar truco mientras gira
+
+            const tecla = parseInt(event.key);
+            // Si presionas 1-8, seleccionas el ganador
+            if (tecla >= 1 && tecla <= 8) {
+                ganadorTrucado = tecla - 1; // Convertir 1-8 a índice 0-7
+                // Indicador visual discreto (punto verde en esquina)
+                document.getElementById('indicador-truco').style.backgroundColor = "#2ecc71";
+                console.log("Truco activado: ganará " + opciones[ganadorTrucado]);
+            } 
+            // Si presionas 0 o Esc, desactivas el truco
+            else if (event.key === "0" || event.key === "Escape") {
+                ganadorTrucado = -1;
+                document.getElementById('indicador-truco').style.backgroundColor = "transparent";
+                console.log("Truco desactivado (Modo Aleatorio)");
+            }
+        });
+
+        // --- FUNCIÓN DE GIRO ---
+        function girarRuleta() {
+            if (girando) return;
+            girando = true;
+            document.getElementById("resultado").innerText = "Girando...";
+
+            // Calcular cuánto girar
+            let gradosExtra;
+
+            if (ganadorTrucado !== -1) {
+                // MODO TRUCO: Calcular ángulo exacto para caer en el índice deseado
+                const pasoGrados = 360 / opciones.length;
+                
+                // Queremos aterrizar en el centro del gajo seleccionado.
+                // Fórmula: (Indice * paso) + (paso / 2)
+                const anguloObjetivo = (ganadorTrucado * pasoGrados) + (pasoGrados / 2);
+                
+                // Calculamos vueltas completas (5 vueltas = 1800 grados)
+                const vueltasMinimas = 1800; 
+
+                // Matemáticas para ajustar el giro al objetivo:
+                // Necesitamos que (anguloActual + X) % 360  sea igual a anguloObjetivo.
+                const residuoActual = anguloActual % 360;
+                let distancia = anguloObjetivo - residuoActual;
+                
+                // Ajustar si la distancia es negativa para que siempre sume
+                if (distancia < 0) distancia += 360;
+                
+                // Añadir un pequeño "jitter" (variación) para que no caiga en el mismo píxel siempre
+                // Variación de +/- 15 grados dentro del gajo
+                const aleatoriedadRealista = (Math.random() * 30) - 15;
+
+                gradosExtra = vueltasMinimas + distancia + aleatoriedadRealista;
+
+            } else {
+                // MODO ALEATORIO NORMAL
+                gradosExtra = 1800 + Math.random() * 3600;
+            }
+
+            const rotacionTotal = anguloActual + gradosExtra;
+            canvas.style.transform = `rotate(-${rotacionTotal}deg)`;
+            anguloActual = rotacionTotal;
+
+            setTimeout(() => {
+                girando = false;
+                calcularGanador(rotacionTotal);
+                
+                // Reiniciar truco después del giro para que no sea sospechoso
+                ganadorTrucado = -1; 
+                document.getElementById('indicador-truco').style.backgroundColor = "transparent";
+            }, 5000);
+        }
+
+        function calcularGanador(grados) {
+            const gradosReales = grados % 360;
+            const paso = 360 / opciones.length;
+            
+            // Nota: Debido a la rotación negativa CSS, la lógica de índice se mantiene positiva
+            // Ajustamos el índice si se pasa del array
+            let indice = Math.floor(gradosReales / paso);
+            if (indice >= opciones.length) indice = 0;
+
+            const ganador = opciones[indice];
+            document.getElementById("resultado").innerText = "¡Ha salido: " + ganador.toUpperCase() + "!";
+            document.body.style.backgroundColor = colores[indice % colores.length];
+            setTimeout(() => { document.body.style.backgroundColor = "#f4f4f4"; }, 500);
+        }
+    </script>
+</body>
+</html>
