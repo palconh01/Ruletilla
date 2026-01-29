@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta</title>
+    <title>Ruleta con Carrusel</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,22 +15,50 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            background-image: url('https://www.famousbirthdays.com/headshots/jovani-vazquez-2.jpg')
-            
+            background-image: url('https://www.famousbirthdays.com/headshots/jovani-vazquez-2.jpg');
+            transition: background-color 0.5s;
         }
 
-        h1 { color: #333; margin-bottom: 20px; }
+        h1 { color: #333; margin-bottom: 20px; background: rgba(255,255,255,0.7); padding: 5px 15px; border-radius: 10px; }
+
+        .contenedor-principal {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
 
         .contenedor-ruleta {
             position: relative;
-            width: 500px;
-            height: 500px;
+            width: 400px;
+            height: 400px;
         }
 
         canvas {
             border-radius: 50%;
             box-shadow: 0 10px 20px rgba(0,0,0,0.19);
             transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Carrusel de Imágenes */
+        #contenedor-carrusel {
+            width: 300px;
+            height: 180px;
+            border: 5px solid white;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        #imagen-carrusel {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.2s;
         }
 
         .indicador {
@@ -51,14 +79,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background: #333;
             color: white;
             border-radius: 50%;
             border: 4px solid white;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 14px;
             cursor: pointer;
             z-index: 5;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -68,7 +96,7 @@
         .boton-girar:hover { background: #555; }
 
         #resultado {
-            margin-top: 30px;
+            margin-top: 10px;
             font-size: 24px;
             font-weight: bold;
             color: #333;
@@ -78,8 +106,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        
-        /* Pequeño indicador secreto para que sepas si el truco está activo (opcional) */
+
         #indicador-truco {
             position: fixed;
             bottom: 10px;
@@ -95,10 +122,16 @@
 
     <h1>La Ruleta Aleatoria</h1>
 
-    <div class="contenedor-ruleta">
-        <canvas id="canvas" width="500" height="500"></canvas>
-        <div class="indicador"></div>
-        <button class="boton-girar" onclick="girarRuleta()">GIRAR</button>
+    <div class="contenedor-principal">
+        <div id="contenedor-carrusel">
+            <img id="imagen-carrusel" src="https://picsum.photos/300/180?random=1" alt="Carrusel">
+        </div>
+
+        <div class="contenedor-ruleta">
+            <canvas id="canvas" width="500" height="500"></canvas>
+            <div class="indicador"></div>
+            <button class="boton-girar" onclick="girarRuleta()">GIRAR</button>
+        </div>
     </div>
 
     <div id="resultado">Haz clic para girar</div>
@@ -107,16 +140,21 @@
 
     <script>
         const opciones = [
-            "belle 2021",                         // Tecla 1
-            "when marnie was there",              // Tecla 2
-            "el castillo en el cielo",            // Tecla 3
-            "Good fortune   ",                    // Tecla 4
-            "La hermanastra fea",                 // Tecla 5
-            "La boda de muriel",                  // Tecla 6
-            "Blank",                              // Tecla 7
-            "Shelby Oaks"                         // Tecla 8
-            
-            
+            "belle 2021", "when marnie was there", "el castillo en el cielo", 
+            "Good fortune", "La hermanastra fea", "La boda de muriel", 
+            "Blank", "Shelby Oaks"
+        ];
+
+        // URLs para el carrusel
+        const imagenesCarrusel = [
+            "https://picsum.photos/300/180?random=10",
+            "https://picsum.photos/300/180?random=11",
+            "https://picsum.photos/300/180?random=12",
+            "https://picsum.photos/300/180?random=13",
+            "https://picsum.photos/300/180?random=14",
+            "https://picsum.photos/300/180?random=15",
+            "https://picsum.photos/300/180?random=16",
+            "https://picsum.photos/300/180?random=17"
         ];
 
         const colores = ["#FF6384", "#36A2EB", "#CCFF90", "#FFCE56", "#DDA0DD", "#FF9F40", "#4BC0C0", "#9966FF"];
@@ -125,12 +163,13 @@
         const ctx = canvas.getContext("2d");
         const centro = canvas.width / 2;
         const radio = canvas.width / 2;
+        const imgElement = document.getElementById("imagen-carrusel");
         
         let anguloActual = 0; 
         let girando = false;
-        let ganadorTrucado = -1; // -1 significa aleatorio
+        let ganadorTrucado = -1;
+        let carruselInterval;
 
-        // Dibujar Ruleta
         function dibujarRuleta() {
             const paso = (2 * Math.PI) / opciones.length;
             for (let i = 0; i < opciones.length; i++) {
@@ -153,60 +192,46 @@
         }
         dibujarRuleta();
 
-        // ---  (EVENTOS DE TECLADO) ---
+        // Control del carrusel
+        function animarCarrusel() {
+            carruselInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * imagenesCarrusel.length);
+                imgElement.src = imagenesCarrusel[randomIndex];
+            }, 150); // Cambia imagen cada 150ms
+        }
+
         document.addEventListener('keydown', (event) => {
             if (girando) return; 
-
             const tecla = parseInt(event.key);
-            // Si presionas 1-8, se selecciona el ganador
             if (tecla >= 1 && tecla <= 8) {
-                ganadorTrucado = tecla - 1; // Convertir 1-8 a índice 0-7
-                // Indicador visual discreto (punto verde en esquina)
+                ganadorTrucado = tecla - 1;
                 document.getElementById('indicador-truco').style.backgroundColor = "#2ecc71";
-                console.log("Truco activado: ganará " + opciones[ganadorTrucado]);
             } 
-            // Si presionas 0 o Esc, desactivas el truco
             else if (event.key === "0" || event.key === "Escape") {
                 ganadorTrucado = -1;
                 document.getElementById('indicador-truco').style.backgroundColor = "transparent";
-                console.log("Truco desactivado (Modo Aleatorio)");
             }
         });
 
-        // --- FUNCIÓN DE GIRO ---
         function girarRuleta() {
             if (girando) return;
             girando = true;
             document.getElementById("resultado").innerText = "Girando...";
+            
+            // Iniciar carrusel
+            animarCarrusel();
 
-            // Calcular cuánto girar
             let gradosExtra;
-
             if (ganadorTrucado !== -1) {
-               
                 const pasoGrados = 360 / opciones.length;
-                                // Fórmula: (Indice * paso) + (paso / 2)
                 const anguloObjetivo = (ganadorTrucado * pasoGrados) + (pasoGrados / 2);
-                
-                // Calculamos vueltas completas (5 vueltas = 1800 grados)
                 const vueltasMinimas = 1800; 
-
-                // Matemáticas para ajustar el giro al objetivo:
-                // Necesitamos que (anguloActual + X) % 360  sea igual a anguloObjetivo.
                 const residuoActual = anguloActual % 360;
                 let distancia = anguloObjetivo - residuoActual;
-                
-                // Ajustar si la distancia es negativa para que siempre sume
                 if (distancia < 0) distancia += 360;
-                
-                // Añadir un "jitter" (variación) para que no caiga en el mismo píxel siempre
-                // Variación de +/- 15 grados dentro del gajo
                 const aleatoriedadRealista = (Math.random() * 30) - 15;
-
                 gradosExtra = vueltasMinimas + distancia + aleatoriedadRealista;
-
             } else {
-                // MODO ALEATORIO NORMAL
                 gradosExtra = 1800 + Math.random() * 3600;
             }
 
@@ -216,6 +241,7 @@
 
             setTimeout(() => {
                 girando = false;
+                clearInterval(carruselInterval); // Detener carrusel
                 calcularGanador(rotacionTotal);
                 
                 ganadorTrucado = -1; 
@@ -226,16 +252,17 @@
         function calcularGanador(grados) {
             const gradosReales = grados % 360;
             const paso = 360 / opciones.length;
-            
-            
-            // Ajustamos el índice si se pasa del array
             let indice = Math.floor(gradosReales / paso);
             if (indice >= opciones.length) indice = 0;
 
             const ganador = opciones[indice];
             document.getElementById("resultado").innerText = "¡Ha salido: " + ganador.toUpperCase() + "!";
+            
+            // Mostrar la imagen que corresponde al ganador (o una aleatoria final)
+            imgElement.src = imagenesCarrusel[indice]; 
+            
             document.body.style.backgroundColor = colores[indice % colores.length];
-            setTimeout(() => { document.body.style.backgroundColor = "#f4f4f4"; }, 500);
+            setTimeout(() => { document.body.style.backgroundColor = "#f4f4f4"; }, 1000);
         }
     </script>
 </body>
