@@ -110,11 +110,12 @@
             "belle 2021",                         // Tecla 1
             "when marnie was there",              // Tecla 2
             "el castillo en el cielo",            // Tecla 3
-            "100 metros",                     // Tecla 4
+            "Good fortune   ",                     // Tecla 4
             "La hermanastra fea",                 // Tecla 5
-            "sailor moon y la promesa de la rosa",// Tecla 6
-            "swing girls",                        // Tecla 7
-            "a whisker away"                     // Tecla 8
+            "La boda de muriel",// Tecla 6
+            "Blank",                        // Tecla 7
+            "Shelby Oaks"                     // Tecla 8
+            
             
         ];
 
@@ -127,7 +128,7 @@
         
         let anguloActual = 0; 
         let girando = false;
-        let ganadorTrucado = -1; // -1 significa aleatorio, 0-7 es trucado
+        let ganadorTrucado = -1; // -1 significa aleatorio
 
         // Dibujar Ruleta
         function dibujarRuleta() {
@@ -152,9 +153,9 @@
         }
         dibujarRuleta();
 
-        // --- LÓGICA DEL TRUCO (EVENTOS DE TECLADO) ---
+        // ---  (EVENTOS DE TECLADO) ---
         document.addEventListener('keydown', (event) => {
-            if (girando) return; // No cambiar truco mientras gira
+            if (girando) return; 
 
             const tecla = parseInt(event.key);
             // Si presionas 1-8, seleccionas el ganador
@@ -182,11 +183,9 @@
             let gradosExtra;
 
             if (ganadorTrucado !== -1) {
-                // MODO TRUCO: Calcular ángulo exacto para caer en el índice deseado
+               
                 const pasoGrados = 360 / opciones.length;
-                
-                // Queremos aterrizar en el centro del gajo seleccionado.
-                // Fórmula: (Indice * paso) + (paso / 2)
+                                // Fórmula: (Indice * paso) + (paso / 2)
                 const anguloObjetivo = (ganadorTrucado * pasoGrados) + (pasoGrados / 2);
                 
                 // Calculamos vueltas completas (5 vueltas = 1800 grados)
@@ -219,7 +218,6 @@
                 girando = false;
                 calcularGanador(rotacionTotal);
                 
-                // Reiniciar truco después del giro para que no sea sospechoso
                 ganadorTrucado = -1; 
                 document.getElementById('indicador-truco').style.backgroundColor = "transparent";
             }, 5000);
