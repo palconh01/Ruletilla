@@ -158,7 +158,7 @@
             if (girando) return; 
 
             const tecla = parseInt(event.key);
-            // Si presionas 1-8, seleccionas el ganador
+            // Si presionas 1-8, se selecciona el ganador
             if (tecla >= 1 && tecla <= 8) {
                 ganadorTrucado = tecla - 1; // Convertir 1-8 a índice 0-7
                 // Indicador visual discreto (punto verde en esquina)
@@ -199,7 +199,7 @@
                 // Ajustar si la distancia es negativa para que siempre sume
                 if (distancia < 0) distancia += 360;
                 
-                // Añadir un pequeño "jitter" (variación) para que no caiga en el mismo píxel siempre
+                // Añadir un "jitter" (variación) para que no caiga en el mismo píxel siempre
                 // Variación de +/- 15 grados dentro del gajo
                 const aleatoriedadRealista = (Math.random() * 30) - 15;
 
@@ -227,7 +227,7 @@
             const gradosReales = grados % 360;
             const paso = 360 / opciones.length;
             
-            // Nota: Debido a la rotación negativa CSS, la lógica de índice se mantiene positiva
+            
             // Ajustamos el índice si se pasa del array
             let indice = Math.floor(gradosReales / paso);
             if (indice >= opciones.length) indice = 0;
